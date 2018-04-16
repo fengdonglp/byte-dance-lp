@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>队伍设置</title>
+  <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/weui/1.1.2/style/weui.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="css/index.css" />
+</head>
+
+<body>
+  <div class="form">
+    <header class="demos-header">
+      <h1 class="demos-title">队伍设置</h1>
+    </header>
+    <div class="weui-cells weui-cells_form">
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">队伍数</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" type="number" pattern="[0-9]*" placeholder="请输入分配的队伍数" id="ranks">
+        </div>
+      </div>
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">每队人数</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" type="number" pattern="[0-9]*" placeholder="请输入每队人数" id="perRanksNum">
+        </div>
+      </div>
+    </div>
+    <a href="javascript:;" class="weui-btn weui-btn_primary submit-btn" id="reset">确认设置</a>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+
+  <script>
+    $().ready(function () {
+      $('#reset').click(function () {
+        var ranks = $('#ranks').val();
+        var perRanksNum = $('#perRanksNum').val();
+
+        if (!$.trim(ranks)) {
+          $.toast('请输入队伍数');
+        } else if (!$.trim(perRanksNum)) {
+          $.toast('请输入每队人数');
+        } else {
+          $.showLoading('正在设置');
+          setPool(ranks, perRanksNum);
+        }
+      })
+    });
+
+    function setPool(ranks, perRanksNum) {
+      $.post('/api/pool/set', {
+        ranks: ranks,
+        perRanksNum: perRanksNum
+      }, function(res) {
+        $.hideLoading();
+        if (res.errno === '200') {
+          $.alert('设置成功');
+        } else {
+          $.alert(res.errtext);
+        }
+      })
+    }
+  </script>
+
+</body>
+
+</html>

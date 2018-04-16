@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "course_name": "异议处理",
+    "students": []
+  },
+  {
+    "id": 2,
+    "course_name": "优秀录音&优秀案例分享",
+    "students": []
+  },
+  {
+    "id": 3,
+    "course_name": "话术研讨",
+    "students": []
+  },
+  {
+    "id": 4,
+    "course_name": "重点产品：放心购&抖音",
+    "students": []
+  },
+  {
+    "id": 5,
+    "course_name": "竞品分析",
+    "students": []
+  },
+  {
+    "id": 6,
+    "course_name": "职业素养",
+    "students": []
+  },
+  {
+    "id": 7,
+    "course_name": "职业生涯规划",
+    "students": []
+  },
+  {
+    "id": 8,
+    "course_name": "情绪管理",
+    "students": []
+  },
+  {
+    "id": 9,
+    "course_name": "目标管理",
+    "students": []
+  },
+  {
+    "id": 10,
+    "course_name": "团队管理",
+    "students": []
+  }
+]
