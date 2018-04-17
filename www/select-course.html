@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>选课</title>
+  <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/weui/1.1.2/style/weui.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
+  <link rel="stylesheet" href="css/jquery-labelauty.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="css/index.css" />
+  <link rel="stylesheet" type="text/css" media="screen" href="css/course.css" />
+  <style>
+    ul, li {
+      list-style: none;
+    }
+
+    li {
+      margin-top: 10px;
+    }
+    .form {
+      padding: 0 15px;
+    }
+    header h3 {
+      color: #3cc51f;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    p {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    input.labelauty + label {
+      color: '#000';
+      min-width: 180px;
+    }
+
+    .submit-btn {
+      line-height: 36px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="form">
+    <header>
+      <h3 class="student-name"></h3>
+    </header>
+    <p>所有可选课程：</p>
+    <ul class="course-lists">
+      
+    </ul>
+    <a href="javascript:;" class="weui-btn weui-btn_primary submit-btn" id="select">提交</a>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+  <script src="lib/jquery-labelauty.js"></script>
+
+  <script>
+    var params = resolveUrl();
+
+    $().ready(function() {
+      $('.student-name').html(params.student_name);
+      getCourses();
+
+
+    });
+
+    function bindEvent() {
+      $('#select').click(function() {
+        var checkedInput = $('input:checked');
+
+        if (checkedInput.length === 0) {
+          $.toast('请选择课程', 'forbidden');
+        } else {
+          $.post('/api/course/select', {
+            course_id: parseInt(checkedInput.data('id')),
+            course_name: checkedInput.data('name'),
+            student_name: params.student_name
+          }, function(res) {
+            if (res.errno === '200') {
+              $.toast('选课成功', function() {
+                window.history.back();
+              })
+            } else {
+              $.toast(res.errtext, 'forbidden');
+            }
+          });
+        }
+      })
+    }
+
+    function getCourses() {
+      $.get('/api/course/getList', function(res) {
+        if (res.errno === '200') {
+          var tpl = '<li><input type="radio" name="radio" {{disabled}} data-labelauty="{{name}}" data-name="{{name}}" data-id="{{id}}"></li>'
+          var html = '';
+
+          for (var index = 0; index < res.data.length; index++) {
+            var course = res.data[index];
+            html += tpl.replace(/{{name}}/g, course.course_name)
+              .replace('{{id}}', course.id)
+              .replace('{{disabled}}', course.students.length >= 3 ? 'disabled' : '');
+          }
+
+          $('.course-lists').html(html);
+
+          $('input').labelauty();
+
+          bindEvent();
+        }
+      })
+    }
+
+    function resolveUrl() {
+      var info = window.location.search.slice(1);
+      
+      if (info) {
+        info = decodeURIComponent(info);
+
+        var arr = info.split('&');
+        var tempObj = {};
+        
+        for (var i in arr) {
+          var j = arr[i];
+          if (j.indexOf('=') !== -1) {
+            var list = j.split('=');
+            tempObj[list[0]] = list[1];
+          } else {
+            tempObj[j] = undefined;
+          }
+        }
+        return tempObj;
+      } else {
+        return null;
+      }
+		}
+  </script>
+
+</body>
+</html>
