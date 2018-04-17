@@ -17,6 +17,7 @@
 
     li {
       margin-top: 10px;
+      position: relative;
     }
     .form {
       padding: 0 15px;
@@ -41,6 +42,15 @@
       line-height: 36px;
       font-size: 16px;
     }
+
+    .more {
+      font-size: 12px;
+      position: absolute;
+      right: 5px;
+      line-height: 39px;
+      top: 0;
+      color: #3cc51f;
+    }
   </style>
 </head>
 <body>
@@ -61,12 +71,11 @@
 
   <script>
     var params = resolveUrl();
+    var COURSE = [];
 
     $().ready(function() {
       $('.student-name').html(params.student_name);
       getCourses();
-
-
     });
 
     function bindEvent() {
@@ -76,11 +85,14 @@
         if (checkedInput.length === 0) {
           $.toast('请选择课程', 'forbidden');
         } else {
+          $.showLoading('提交申请中...');
           $.post('/api/course/select', {
             course_id: parseInt(checkedInput.data('id')),
             course_name: checkedInput.data('name'),
             student_name: params.student_name
           }, function(res) {
+            $.hideLoading();
+
             if (res.errno === '200') {
               $.toast('选课成功', function() {
                 window.history.back();
@@ -91,18 +103,43 @@
           });
         }
       })
+
+      $('.course-lists').on('click', '.more', function() {
+        var index = $(this).data('index');
+        var students = COURSE[index].students;
+        var btns = [];
+
+        for (let index = 0; index < students.length; index++) {
+          const element = students[index];
+          btns.push({
+            text: element.student_name,
+            onClick: function() {}
+          })
+        }
+        $.actions({
+          actions: btns,
+          title: '已选该课程学员'
+        });
+      })
     }
 
     function getCourses() {
+      $.showLoading('正在加载课程...');
+
       $.get('/api/course/getList', function(res) {
+        $.hideLoading();
         if (res.errno === '200') {
-          var tpl = '<li><input type="radio" name="radio" {{disabled}} data-labelauty="{{name}}" data-name="{{name}}" data-id="{{id}}"></li>'
+          var tpl = '<li><input type="radio" name="radio" {{disabled}} data-labelauty="{{name}}" data-name="{{name}}" data-id="{{id}}"><a href="javascript:;" class="more" data-index="{{index}}">查看已选学员</a></li>'
           var html = '';
+
+          COURSE = res.data;
 
           for (var index = 0; index < res.data.length; index++) {
             var course = res.data[index];
-            html += tpl.replace(/{{name}}/g, course.course_name)
+            html += tpl.replace(/{{name}}/, index + 1 + '. ' + course.course_name)
+              .replace(/{{name}}/, course.course_name)
               .replace('{{id}}', course.id)
+              .replace('{{index}}', index)
               .replace('{{disabled}}', course.students.length >= 3 ? 'disabled' : '');
           }
 
@@ -111,6 +148,8 @@
           $('input').labelauty();
 
           bindEvent();
+        } else {
+          $.toast(res.errtext, 'forbidden');
         }
       })
     }

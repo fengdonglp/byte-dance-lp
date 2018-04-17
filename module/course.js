@@ -18,23 +18,36 @@ const LIMIT_SELECT_NUM = 3; // 每个课程限制多少人选取
  *      
  */
 
-router.get('/getList', function(req, res) {
-  fs.readFile(COURSE_FILE, function (err, data) {
-    if (err) {
-      res.json({
-        errno: '401',
-        errtext: '读取course文件异常'
-      });
-    }
-
-    const courses = JSON.parse(data);
-
+router.get('/getList', async (req, res) => {
+  try {
+    const courses = await readFile(COURSE_FILE);
     res.json({
       errno: '200',
       errtext: 'success',
-      data: courses 
+      data: courses
     });
-  })
+  } catch (error) {
+    res.json({
+      errno: '403',
+      errtext: error
+    })
+  }
+})
+
+router.get('/getStudents', async (req, res) => {
+  try {
+    const courses = await readFile(STUDENT_FILE);
+    res.json({
+      errno: '200',
+      errtext: 'success',
+      data: courses
+    });
+  } catch (error) {
+    res.json({
+      errno: '403',
+      errtext: error
+    })
+  }
 })
 
 router.post('/select', async (req, res) => {
@@ -167,7 +180,7 @@ async function filterCourse(data) {
     const course = courses.find(item => item.id == course_id);
     
     if (course) {
-      if (course.students.length >= 3) {
+      if (course.students.length >= LIMIT_SELECT_NUM) {
         has_error = true;
         errtext = '该课程选取已超上限，请选取其他课程';
       }
