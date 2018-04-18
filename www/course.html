@@ -9,62 +9,6 @@
   <link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
   <link rel="stylesheet" type="text/css" media="screen" href="css/index.css" />
   <link rel="stylesheet" type="text/css" media="screen" href="css/course.css" />
-  <style>
-    .result-container {
-      background: #fff;
-      z-index: 100;
-    }
-    .table-container {
-      width: 100%;
-      position: absolute;
-      top: 0;
-      bottom: 100px;
-      padding: 10px;
-      overflow: auto;
-      box-sizing: border-box;
-    }
-    table {
-      margin: 0 auto;
-      font-size:12px;
-      color:#333333;
-      border-width: 1px;
-      border-color: #666666;
-      border-collapse: collapse;
-    }
-    th {
-      border-width: 1px;
-      padding: 8px;
-      border-style: solid;
-      border-color: #666666;
-      background-color: #dedede;
-    }
-    td {
-      border-width: 1px;
-      padding: 8px;
-      border-style: solid;
-      border-color: #666666;
-      background-color: #ffffff;
-    }
-    .operate-container {
-      width: 100%;
-      position: absolute;
-      bottom: 0;
-      text-align: center;
-    }
-    .operate-container a {
-      display: inline-block;
-      width: 40%;
-      margin: 0;
-      height: 100px;
-    }
-    .operate-container a:first-of-type {
-      margin-right: 20px;
-    }
-    .submit-btn {
-      line-height: 36px;
-      font-size: 16px;
-    }
-  </style>
 </head>
 <body>
   <div class="form">
@@ -91,6 +35,7 @@
           <tr>
             <th>学员姓名</th>
             <th>所选课程</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -106,8 +51,11 @@
 
   <script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
   <script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+  
+  </script>
 
   <script>
+    var stuData = [];
     $().ready(function() {
       $('#select').click(function() {
         var student_name = $('#studentName').val();
@@ -126,23 +74,53 @@
       $('#back').click(function() {
         $('.result-container').hide();
       })
+
+      $('#reset').click(function() {
+        $.get('/api/course/reset', function(res) {
+          if (res.errno == '200') {
+            $.toast('重置成功', 1000, function() {
+              showSecret();
+            })
+          } else {
+            $.toast(res.errtext, 'forbidden');
+          }
+        })
+      })
+
+      $('.table-container').on('click', '.delete', function() {
+        var index = $(this).data('index');
+        var data = stuData[index];
+
+        $.post('/api/course/student/delete', data, function(res) {
+          if (res.errno == '200') {
+            $.toast('删除成功', 1000, function() {
+              showSecret();
+            })
+          } else {
+            $.toast(res.errtext, 'forbidden');
+          }
+        })
+      })
     });
 
     function showSecret() {
       $('.result-container').show();
       $.showLoading('数据加载中');
 
-      $.get('/api/course/getStudents', function(res) {
+      $.get('/api/course/student/getList', function(res) {
         $.hideLoading();
         if (res.errno === '200') {
-          var tpl = '<tr><td>{{name}}</td><td>{{course}}</td></tr>';
+          var tpl = '<tr><td>{{name}}</td><td>{{course}}</td><td><a href="javascript:;" data-index="{{index}}" style="color: #3cc51f;" class="delete">删除</a></td></tr>';
           var html = '';
+          
+          stuData = res.data;
 
-          for (let index = 0; index < res.data.length; index++) {
-            const element = res.data[index];
+          for (var index = 0; index < res.data.length; index++) {
+            var element = res.data[index];
             
             html += tpl.replace('{{name}}', element.student_name)
-              .replace('{{course}}', element.course_name);
+              .replace('{{course}}', element.course_name)
+              .replace('{{index}}', index);
           }
 
           $('.table-container tbody').html(html);

@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
-const Path = require('path');
+const path = require('path');
+const {
+  readFile,
+  writeFile,
+  copyFile,
+  filterStudent,
+  filterCourse
+} = require('./utils/file');
 
-const COURSE_FILE = Path.join(__dirname, '../data/course.json');
-const STUDENT_FILE = Path.join(__dirname, '../data/students.json');
-const LIMIT_SELECT_NUM = 3; // 每个课程限制多少人选取
+const COURSE_FILE = path.join(__dirname, '../data/course.json');
+const CLONE_COURSE_FILE = path.join(__dirname, '../data/course_copy.json');
+const STUDENT_FILE = path.join(__dirname, '../data/students.json');
 
 /**
  * 选课流程：上传用户名和选课id及name，
@@ -18,6 +25,7 @@ const LIMIT_SELECT_NUM = 3; // 每个课程限制多少人选取
  *      
  */
 
+// 获取课程列表
 router.get('/getList', async (req, res) => {
   try {
     const courses = await readFile(COURSE_FILE);
@@ -34,7 +42,8 @@ router.get('/getList', async (req, res) => {
   }
 })
 
-router.get('/getStudents', async (req, res) => {
+// 获取学生列表
+router.get('/student/getList', async (req, res) => {
   try {
     const courses = await readFile(STUDENT_FILE);
     res.json({
@@ -50,6 +59,68 @@ router.get('/getStudents', async (req, res) => {
   }
 })
 
+router.post('/student/delete', async (req, res) => {
+  const {
+    id,
+    course_id,
+    course_name,
+    student_name
+  } = req.body;
+
+  try {
+    let students = await readFile(STUDENT_FILE);
+    let courses = await readFile(COURSE_FILE);
+
+    const stuIndex = students.findIndex(item => item.id == id);
+    if (stuIndex !== -1) {
+      // 从学生表中删除学生信息
+      students.splice(stuIndex, 1);
+
+      // 从课程表中删除已选学生信息
+      courses.forEach((item, index) => {
+        if (item.id == course_id) {
+          const index = item.students.findIndex(stu => stu.student_id == id);
+          item.students.splice(index, 1);
+        }
+      });
+
+    } else {
+      throw new Error('未查找到该学生信息');
+    }
+
+    await writeFile(STUDENT_FILE, students);
+    await writeFile(COURSE_FILE, courses);
+
+    res.json({
+      errno: '200',
+      errtext: 'success'
+    })
+  } catch (error) {
+    res.json({
+      errno: '403',
+      errtext: error
+    });
+  }
+})
+
+// 重置数据
+router.get('/reset', async (req, res) => {
+  try {
+    await copyFile(CLONE_COURSE_FILE, COURSE_FILE);
+    await writeFile(STUDENT_FILE, []);
+    res.json({
+      errno: '200',
+      errtext: 'success'
+    });
+  } catch (error) {
+    res.json({
+      errno: '403',
+      errtext: '重置操作异常，请重试'
+    })
+  }
+})
+
+// 选课
 router.post('/select', async (req, res) => {
   const {
     course_id,
@@ -70,9 +141,11 @@ router.post('/select', async (req, res) => {
       // 首先需将course表中已填入的该学生的上次所选课程内的姓名进行删除才可
       courses.forEach((item, index) => {
         if (item.id == student.course_id) {
-          const index = item.students.findIndex(stu => stu.id == student.id);
+          const index = item.students.findIndex(stu => stu.student_id == student.id);
 
-          item.students.splice(index, 1);
+          if (index !== -1) {
+            item.students.splice(index, 1);
+          }
         }
       });
 
@@ -110,92 +183,5 @@ router.post('/select', async (req, res) => {
     });
   }
 })
-
-function readFile(filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, function (err, data) {
-      if (err) {
-        return reject('读取文件异常');
-      }
-
-      resolve(JSON.parse(data));
-    });
-  });
-}
-
-function writeFile(filePath, data) {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(filePath, JSON.stringify(data), function (err) {
-      if (err) {
-        return reject('数据写入异常');
-      }
-
-      resolve();
-    });
-  })
-}
-
-async function filterStudent(data) {
-  const {
-    course_id,
-    course_name,
-    student_name
-  } = data;
-  let has_error = false;
-  let errtext = '';
-  let students;
-
-  try {
-    students = await readFile(STUDENT_FILE);
-    const student = students.find(item => item.student_name === student_name);
-
-    if (student) {
-      if (student.course_id === course_id) {
-        has_error = true;
-        errtext = '你已选择该课程，请勿重复选择';
-      }
-    }
-  } catch (error) {
-    has_error = true;
-    errtext = error;
-  }
-
-  return new Promise((resolve, reject) => {
-    has_error ? reject(errtext) : resolve(students)
-  })
-}
-
-async function filterCourse(data) {
-  const {
-    course_id,
-    course_name,
-    student_name
-  } = data;
-  let has_error = false;
-  let errtext = '';
-  let courses;
-
-  try {
-    courses = await readFile(COURSE_FILE);
-    const course = courses.find(item => item.id == course_id);
-    
-    if (course) {
-      if (course.students.length >= LIMIT_SELECT_NUM) {
-        has_error = true;
-        errtext = '该课程选取已超上限，请选取其他课程';
-      }
-    } else {
-      has_error = true;
-      errtext = '课程不存在, 请核对';
-    }
-  } catch (error) {
-    has_error = true;
-    errtext = error;
-  }
-
-  return new Promise((resolve, reject) => {
-    has_error ? reject(errtext) :  resolve(courses);
-  })
-}
 
 module.exports = router;

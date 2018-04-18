@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,50 +10,9 @@
   <link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
   <link rel="stylesheet" href="css/jquery-labelauty.css">
   <link rel="stylesheet" type="text/css" media="screen" href="css/index.css" />
-  <link rel="stylesheet" type="text/css" media="screen" href="css/course.css" />
-  <style>
-    ul, li {
-      list-style: none;
-    }
-
-    li {
-      margin-top: 10px;
-      position: relative;
-    }
-    .form {
-      padding: 0 15px;
-    }
-    header h3 {
-      color: #3cc51f;
-      text-align: center;
-      margin: 10px 0;
-    }
-
-    p {
-      font-size: 14px;
-      margin-bottom: 5px;
-    }
-
-    input.labelauty + label {
-      color: '#000';
-      min-width: 180px;
-    }
-
-    .submit-btn {
-      line-height: 36px;
-      font-size: 16px;
-    }
-
-    .more {
-      font-size: 12px;
-      position: absolute;
-      right: 5px;
-      line-height: 39px;
-      top: 0;
-      color: #3cc51f;
-    }
-  </style>
+  <link rel="stylesheet" type="text/css" media="screen" href="css/select-course.css" />
 </head>
+
 <body>
   <div class="form">
     <header>
@@ -60,7 +20,7 @@
     </header>
     <p>所有可选课程：</p>
     <ul class="course-lists">
-      
+
     </ul>
     <a href="javascript:;" class="weui-btn weui-btn_primary submit-btn" id="select">提交</a>
   </div>
@@ -68,18 +28,34 @@
   <script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
   <script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
   <script src="lib/jquery-labelauty.js"></script>
+  <script type="text/html" id="courseTpl">
+    <li>
+      <input type="radio" name="radio" {{disabled}} data-labelauty="{{name}}" data-name="{{name}}" data-id="{{id}}">
+      <a href="javascript:;" class="more" data-index="{{index}}">查看已选学员</a>
+      <div class="extra-info">
+        <div class="info-line" style="display: {{showAdvice}}">
+          <span class="">维度建议：</span>
+          <div>{{advice}}</div>
+        </div>
+        <div class="info-line" style="display: {{showSuitable}}">
+          <span>受众人群：</span>
+          <div class="red">{{suitable}}</div>
+        </div>
+      </div>
+    </li>
+  </script>
 
   <script>
     var params = resolveUrl();
     var COURSE = [];
 
-    $().ready(function() {
+    $().ready(function () {
       $('.student-name').html(params.student_name);
       getCourses();
     });
 
     function bindEvent() {
-      $('#select').click(function() {
+      $('#select').click(function () {
         var checkedInput = $('input:checked');
 
         if (checkedInput.length === 0) {
@@ -90,11 +66,11 @@
             course_id: parseInt(checkedInput.data('id')),
             course_name: checkedInput.data('name'),
             student_name: params.student_name
-          }, function(res) {
+          }, function (res) {
             $.hideLoading();
 
             if (res.errno === '200') {
-              $.toast('选课成功', function() {
+              $.toast('选课成功', function () {
                 window.history.back();
               })
             } else {
@@ -104,16 +80,16 @@
         }
       })
 
-      $('.course-lists').on('click', '.more', function() {
+      $('.course-lists').on('click', '.more', function () {
         var index = $(this).data('index');
         var students = COURSE[index].students;
         var btns = [];
 
-        for (let index = 0; index < students.length; index++) {
-          const element = students[index];
+        for (var index = 0; index < students.length; index++) {
+          var element = students[index];
           btns.push({
             text: element.student_name,
-            onClick: function() {}
+            onClick: function () {}
           })
         }
         $.actions({
@@ -126,10 +102,10 @@
     function getCourses() {
       $.showLoading('正在加载课程...');
 
-      $.get('/api/course/getList', function(res) {
+      $.get('/api/course/getList', function (res) {
         $.hideLoading();
         if (res.errno === '200') {
-          var tpl = '<li><input type="radio" name="radio" {{disabled}} data-labelauty="{{name}}" data-name="{{name}}" data-id="{{id}}"><a href="javascript:;" class="more" data-index="{{index}}">查看已选学员</a></li>'
+          var tpl = $('#courseTpl').html();
           var html = '';
 
           COURSE = res.data;
@@ -139,6 +115,10 @@
             html += tpl.replace(/{{name}}/, index + 1 + '. ' + course.course_name)
               .replace(/{{name}}/, course.course_name)
               .replace('{{id}}', course.id)
+              .replace('{{showAdvice}}', course.advice ? 'block' : 'none')
+              .replace('{{showSuitable}}', course.suitable ? 'block' : 'none')
+              .replace('{{advice}}', course.advice)
+              .replace('{{suitable}}', course.suitable)
               .replace('{{index}}', index)
               .replace('{{disabled}}', course.students.length >= 3 ? 'disabled' : '');
           }
@@ -156,14 +136,14 @@
 
     function resolveUrl() {
       var info = window.location.search.slice(1);
-      
+
       if (info) {
         info = decodeURIComponent(info);
 
         var arr = info.split('&');
         var tempObj = {};
         
-        for (var i in arr) {
+        for (var i = 0; i < arr.length; i++) {
           var j = arr[i];
           if (j.indexOf('=') !== -1) {
             var list = j.split('=');
@@ -172,12 +152,14 @@
             tempObj[j] = undefined;
           }
         }
+
         return tempObj;
       } else {
         return null;
       }
-		}
+    }
   </script>
 
 </body>
+
 </html>

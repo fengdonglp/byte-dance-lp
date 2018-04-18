@@ -1,0 +1,67 @@
+ul,
+li {
+  list-style: none;
+}
+
+li {
+  margin-top: 10px;
+  position: relative;
+}
+
+.form {
+  padding: 0 15px;
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+header h3 {
+  color: #3cc51f;
+  text-align: center;
+  margin: 10px 0;
+}
+
+p {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+input.labelauty+label {
+  color: '#000';
+  min-width: 180px;
+}
+
+.submit-btn {
+  line-height: 36px;
+  font-size: 16px;
+}
+
+.more {
+  font-size: 12px;
+  position: absolute;
+  right: 5px;
+  line-height: 39px;
+  top: 0;
+  color: #3cc51f;
+}
+
+.extra-info {
+  font-size: 12px;
+  line-height: 20px;
+  overflow: hidden;
+  color: #999;
+  margin-top: 4px;
+}
+
+.extra-info span {
+  float: left;
+  line-height: 20px;
+}
+
+.red {
+  color: #F56C6C;
+}
+
+.extra-info .info-line div {
+  margin-left: 65px;
+}
