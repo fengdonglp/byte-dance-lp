@@ -1,8 +1,12 @@
 const fs = require('fs');
+const path = require('path');
 
+const COURSE_FILE = path.join(__dirname, '../../data/course.json');
+const CLONE_COURSE_FILE = path.join(__dirname, '../../data/course_copy.json');
+const STUDENT_FILE = path.join(__dirname, '../../data/students.json');
 const LIMIT_SELECT_NUM = 3; // 每个课程限制多少人选取
 
-exports.readFile = function(filePath) {
+const readFile = function(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, function (err, data) {
       if (err) {
@@ -14,7 +18,7 @@ exports.readFile = function(filePath) {
   });
 }
 
-exports.writeFile = function(filePath, data) {
+const writeFile = function(filePath, data) {
   return new Promise((resolve, reject) => {
     fs.writeFile(filePath, JSON.stringify(data), function (err) {
       if (err) {
@@ -26,7 +30,7 @@ exports.writeFile = function(filePath, data) {
   })
 }
 
-exports.copyFile = function(src, dest) {
+const copyFile = function(src, dest) {
   return new Promise((resolve, reject) => {
     fs.copyFile(src, dest, (err) => {
       if (err) {
@@ -42,7 +46,7 @@ exports.copyFile = function(src, dest) {
  * 过滤学生表中是否存在参数的学生
  * @param {object} data 
  */
-exports.filterStudent = async function(data) {
+const filterStudent = async function(data) {
   const {
     course_id,
     course_name,
@@ -76,7 +80,7 @@ exports.filterStudent = async function(data) {
  * 过滤课程表中参数信息里的课程是否已达选择上限
  * @param {object} data 
  */
-exports.filterCourse = async function(data) {
+const filterCourse = async function(data) {
   const {
     course_id,
     course_name,
@@ -107,4 +111,12 @@ exports.filterCourse = async function(data) {
   return new Promise((resolve, reject) => {
     has_error ? reject(errtext) :  resolve(courses);
   })
+}
+
+module.exports = {
+  readFile,
+  writeFile,
+  copyFile,
+  filterCourse,
+  filterStudent
 }

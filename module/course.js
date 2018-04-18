@@ -177,6 +177,7 @@ router.post('/select', async (req, res) => {
       errtext: 'success'
     })
   } catch (error) {
+    console.log(error);
     res.json({
       errno: '403',
       errtext: error
